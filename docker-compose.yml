@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Сервис: наше приложение
+  app:
+    build: .                     # Собираем из Dockerfile в текущей папке
+    ports:
+      - "3000:3000"              # Пробрасываем порт (компьютер:контейнер)
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres         # Имя контейнера с БД (будет доступно как host)
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=notes_db
+      - DB_PORT=5432
+      - JWT_SECRET=my_super_secret_key
+    depends_on:
+      - postgres                 # Ждем запуска БД
+    restart: unless-stopped
+
+  # Сервис: PostgreSQL
+  postgres:
+    image: postgres:15-alpine    # Готовый образ БД
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=notes_db
+    volumes:
+      # Папка с твоими скриптами (левая часть) будет смонтирована в папку инициализации (правая часть)
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+      # Директория для данных БД будет связана с папкой на твоем компьютере
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"              # Пробрасываем порт для внешних подключений
+    restart: unless-stopped
+
+volumes:
+  postgres_data:                 # Том для хранения данных БД
